@@ -1,0 +1,1 @@
+entryBtn = document.getElementById("addEntry")

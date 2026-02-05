@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}MindNest | Emotional Wellbeing Tracker{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="row align-items-center mb-5">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold">
+            Track Your Emotions.<br>
+            Understand Yourself Better.
+        </h1>
+        <p class="lead mt-3">
+            MindNest helps you reflect on your daily emotions, build emotional awareness,
+            and improve your mental wellbeing—one day at a time.
+        </p>
+
+    </div>
+
+    <div class="col-md-6 text-center">
+        <img src="{{ url_for('static', filename='images/SiteLogo.jpg') }}"
+             alt="Mindfulness Illustration"
+             class="img-fluid rounded-4 shadow-sm hero-img"
+             style="max-height: 300px;">
+    </div>
+</div>
+
+<hr>
+
+<!-- Features Section -->
+<div class="row text-center mb-5">
+    <h2 class="fw-bold mb-4">What You Can Do with MindNest</h2>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title">📝 Daily Mood Journaling</h4>
+                <p class="card-text mt-3">
+                    Record how you feel every day using moods and personal notes.
+                    Express yourself freely in a private, secure space.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title">📊 Emotional Insights</h4>
+                <p class="card-text mt-3">
+                    Discover emotional patterns over time and understand what impacts
+                    your mental wellbeing the most.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title">🔒 Safe & Personal</h4>
+                <p class="card-text mt-3">
+                    Your thoughts are private. MindNest is built with secure authentication
+                    to keep your data protected.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Benefits Section -->
+<div class="row mb-5">
+    <h2 class="fw-bold text-center mb-4">How MindNest Helps You</h2>
+
+<div class="row mt-4 text-center">
+  <div class="col-md-3 col-sm-6 mb-4">
+    <div class="p-3 shadow-sm rounded">
+      <h2>🧠</h2>
+      <p class="mb-0 fs-5">Emotional self-awareness</p>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6 mb-4">
+    <div class="p-3 shadow-sm rounded">
+      <h2>🧘</h2>
+      <p class="mb-0 fs-5">Stress reduction</p>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6 mb-4">
+    <div class="p-3 shadow-sm rounded">
+      <h2>📊</h2>
+      <p class="mb-0 fs-5">Progress tracking</p>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6 mb-4">
+    <div class="p-3 shadow-sm rounded">
+      <h2>🌿</h2>
+      <p class="mb-0 fs-5">Mindful routine</p>
+    </div>
+  </div>
+</div>
+
+<!-- Call to Action -->
+<div class="text-center p-5 bg-light rounded shadow-sm">
+    <h3 class="fw-bold">Start Your Emotional Wellness Journey Today 🌱</h3>
+    <a class="btn btn-success btn-md mt-2" id="addEntry">
+        Add Today’s Entry
+    </a>
+    <p class="mt-3">
+        A few minutes a day can make a big difference.
+        Let MindNest be your space to reflect, grow, and heal.
+    </p>
+</div>
+
+{% endblock %}
