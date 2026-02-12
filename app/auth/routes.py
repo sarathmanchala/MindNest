@@ -8,7 +8,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_bp.route("/login")
 def login():
-    return render_template("journal/login.html")
+    return render_template("auth/login.html")
 
 @auth_bp.route("/login/github")
 def github_login():
@@ -89,14 +89,34 @@ def github_callback():
     github_id = str(user_data["id"])
     username = user_data["login"]
     user = User.query.filter_by(github_id=github_id).first()
+    print("Github username is", username)
     if not user:
         user = User(
             github_id=github_id,
             username=username,
-            email=email
+            email=email,
         )
+        print("Github username is", username)
+        user.set_password(username)
         db.session.add(user)
         db.session.commit()
     session["access_token"] = access_token
     login_user(user)
     return redirect(url_for("journal.index"))
+
+
+@auth_bp.route("/login-user", methods=["POST"])
+def login_username():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    print("Email:", email)
+    if not email or not password:
+        return {"error": "Email and password required"}, 400
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return {"error": "Invalid email"}, 401
+    if not user.check_password(password):
+        return {"error": "Invalid password"}, 401
+    login_user(user, remember=True)
+    return {"message": "Login successful", "redirect": url_for("journal.index")}, 200

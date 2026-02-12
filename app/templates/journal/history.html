@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Your Journey | MindNest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-7">
+            <h1 class="fw-bold mb-1">Your Emotional Journey</h1>
+            <p class="text-muted">A reflection of your growth and daily insights.</p>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-5">
+            <div class="input-group">
+                <input type="search" id="searchInput" class="form-control" placeholder="Search your reflections">
+                <button class="btn btn-outline-secondary" id="searchReflection">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Entries -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            {% for entry in entries %}
+            <div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden journal-card position-relative" id="entry-{{entry.id}}">
+                <button class="btn btn-sm btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-3 delete-btn" data-id="{{ entry.id }}">
+                    <i class="bi bi-trash text-danger"></i>
+                </button>
+                <div class="card-body p-4">
+                    <small class="text-uppercase fw-bold text-muted">
+                        {{ entry.timestamp.strftime('%B %d, %Y') }}
+                    </small>
+
+                    <h5 class="fw-bold mt-2">Daily Reflection</h5>
+
+                    <p class="mt-3 italic-content">
+                        "{{ entry.content }}"
+                    </p>
+
+                    <div class="mt-3">
+                        <span class="badge {{ entry.mood_class }} rounded-pill px-3 py-2">
+                            {{ entry.mood_label }} ({{ entry.mood_score }}/10)
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">AI Advice:</small>
+                        <p class="small mb-0">{{ entry.advice }}</p>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- No Entries Fallback -->
+            {% if not entries %}
+            <div class="text-center py-5">
+                <h3 class="text-muted">No reflections found. 🌱</h3>
+                <p class="text-secondary">Try a different date or start a new entry.</p>
+                <a href="{{ url_for('journal.entry') }}"
+                   class="btn btn-success mt-2 rounded-pill px-4 shadow-sm">
+                    Write Today's Entry
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Page Styles -->
+<style>
+    .journal-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .journal-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    }
+
+    .italic-content {
+        font-style: italic;
+        color: #4b4b4b;
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/journal.js') }}"></script>
+
+{% endblock %}
