@@ -1,25 +1,111 @@
-from flask import Blueprint, render_template
-from flask_login import login_required
-from dotenv import load_dotenv
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from flask import Blueprint, render_template,jsonify, request
+from flask_login import current_user, login_required
 import os
-import google.generativeai as genai
+import json
+from google import genai
+from google.genai import types
+from app.models import JournalEntry, User
+from app.extensions import db
 
+api_key = os.environ.get("GEMINI_API_KEY")
+if not api_key:
+    raise RuntimeError("KEY not loaded")
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-
-load_dotenv()
 journal_bp = Blueprint("journal", __name__, url_prefix="/")
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-print("API key loaded:", os.getenv("GEMINI_API_KEY") is not None)
+
+
+def ist_now():
+    return datetime.now(ZoneInfo("Asia/Kolkata"))
+
+def get_mood_class(score):
+    if score >= 8:
+        return "bg-success"
+    elif score >= 5:
+        return "bg-warning text-dark"
+    else:
+        return "bg-danger"
+
 
 @journal_bp.route("/")
 @login_required
 def index():
     return render_template("journal/index.html")
 
-
-
-
 @journal_bp.route("/contact")
 @login_required
 def contact():
     return render_template("journal/contact.html")
+
+@journal_bp.route("/entry")
+@login_required
+def entry():
+    return render_template("journal/entry.html")
+
+@journal_bp.route("/analyze", methods=["POST"])
+@login_required
+def analyze():
+    data = request.get_json()
+    user_feelings = data.get('text')
+    system_prompt = """You are an empathetic wellness assistant trained in emotional intelligence and supportive communication. Analyze the user’s journal entry to identify emotions, stressors, thought patterns, and unspoken concerns. Respond in a warm, non-judgmental tone that validates the user’s feelings. Provide gentle insights, emotional reflections, and optional coping or self-care suggestions. Do not diagnose or give medical advice. Your goal is to help the user feel heard, understood, and emotionally supported. 
+    Return ONLY a JSON object with:
+    - 'summary': A 2-sentence empathetic reflection.
+    - 'mood_label' : A one word which best describes the user's overall mood.
+    - 'advice': One actionable adivice what I can do better next time.
+    - 'score': A mood score from 1 (very low) to 10 (very high)."""
+
+    # Placeholder: Tomorrow we connect this to the real Gemini AI
+    # For now, we return a mock response to test the JavaScript
+    try:
+        response = client.models.generate_content(model="gemini-2.5-flash-lite", contents=user_feelings, config=types.GenerateContentConfig(system_instruction=system_prompt, response_mime_type="application/json"))
+        print(f"AI Response: {response.text}")
+        ai_response = json.loads(response.text)
+        entry = JournalEntry(content=user_feelings, mood_label=ai_response.get("mood_label"), advice=ai_response.get("advice"), mood_score=ai_response.get("score"),timestamp=ist_now(), user_id=current_user.id, ai_summary=ai_response.get("summary"))
+        db.session.add(entry)
+        db.session.commit()
+        score = ai_response.get("score")
+        ai_response['mood_class'] = get_mood_class(score)
+        return jsonify(ai_response)
+    except Exception as e:
+        print(f"Error during AI generation: {e}")
+        return jsonify({"error": "Failed to generate response"}), 500
+    
+
+@journal_bp.route("/history")
+@login_required
+def history():
+    ist = ZoneInfo("Asia/Kolkata")
+    seven_days_ago = datetime.now(ist) - timedelta(days=7)
+    entries = JournalEntry.query.filter(JournalEntry.user_id == current_user.id, JournalEntry.timestamp >= seven_days_ago).order_by(JournalEntry.timestamp.desc()).all()
+    for entry in entries:
+        entry.mood_class = get_mood_class(entry.mood_score)
+    return render_template("journal/history.html", entries=entries)
+
+@journal_bp.route("/entry/<string:query>", methods=["GET"])
+@login_required
+def search_entry(query):
+    entries = JournalEntry.query.filter(JournalEntry.user_id == current_user.id, JournalEntry.content.ilike(f"%{query}%")).order_by(JournalEntry.timestamp.desc()).all()
+    results = []
+    for entry in entries:
+        results.append({
+            "id": entry.id,
+            "content": entry.content,
+            "mood_score": entry.mood_score,
+            "mood_label": entry.mood_label,
+            "advice": entry.advice,
+            "timestamp": entry.timestamp.strftime("%B %d, %Y")
+        })
+    print(f"Search results for '{query}': {results}")
+    return jsonify(results)
+
+@journal_bp.route("/delete/<int:entry_id>", methods=["DELETE"])
+@login_required
+def delete_entry(entry_id):
+    entry = JournalEntry.query.get_or_404(entry_id)
+    if entry.user_id != current_user.id:
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+    db.session.delete(entry)
+    db.session.commit()
+    return jsonify({"success": True})

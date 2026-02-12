@@ -1,119 +1,119 @@
 {% extends "base.html" %}
 
-{% block title %}MindNest | Emotional Wellbeing Tracker{% endblock %}
+{% block title %}MindNest | Welcome {{ current_user.username }}{% endblock %}
 
 {% block content %}
 
-<!-- Hero Section -->
-<div class="row align-items-center mb-5">
-    <div class="col-md-6">
-        <h1 class="display-5 fw-bold">
-            Track Your Emotions.<br>
-            Understand Yourself Better.
-        </h1>
-        <p class="lead mt-3">
-            MindNest helps you reflect on your daily emotions, build emotional awareness,
-            and improve your mental wellbeing—one day at a time.
-        </p>
-
+<div class="row pt-4 pb-2 align-items-center">
+    <div class="col-md-8">
+        <h6 class="text-uppercase text-muted fw-bold mb-1" style="letter-spacing: 1px;">Welcome Back</h6>
+        <h1 class="display-5 fw-bold text-dark">Hello, {{ current_user.username }}! ✨</h1>
+        <p class="lead text-secondary">How is your mind feeling today?</p>
     </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a class="btn btn-success btn-lg shadow-sm px-4 py-3 rounded-pill fw-bold" href="{{ url_for('journal.entry') }}">
+            <span class="me-2">📝</span> Write New Entry
+        </a>
+    </div>
+</div>
 
-    <div class="col-md-6 text-center">
+<hr class="my-5 opacity-25">
+
+<div class="row align-items-center mb-5 py-4 bg-light rounded-4 px-3 mx-1">
+    <div class="col-md-7">
+        <h2 class="fw-bold">Your Journey to Balance</h2>
+        <p class="text-muted fs-5 mt-3">
+            MindNest is your private sanctuary. By tracking your daily emotional landscape, 
+            you can uncover patterns and build a more resilient, mindful version of yourself.
+        </p>
+        <div class="d-flex gap-3 mt-4">
+            <div class="text-center">
+                <span class="badge bg-white text-dark shadow-sm p-3 rounded-circle mb-2">🧠</span>
+                <p class="small fw-bold">Awareness</p>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-white text-dark shadow-sm p-3 rounded-circle mb-2">🧘</span>
+                <p class="small fw-bold">Peace</p>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-white text-dark shadow-sm p-3 rounded-circle mb-2">📊</span>
+                <p class="small fw-bold">Growth</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5 text-center mt-4 mt-md-0">
         <img src="{{ url_for('static', filename='images/SiteLogo.jpg') }}"
              alt="Mindfulness Illustration"
-             class="img-fluid rounded-4 shadow-sm hero-img"
-             style="max-height: 300px;">
+             class="img-fluid rounded-circle shadow-lg border border-5 border-white"
+             style="max-height: 280px; width: 280px; object-fit: cover;">
     </div>
 </div>
 
-<hr>
-
-<!-- Features Section -->
-<div class="row text-center mb-5">
-    <h2 class="fw-bold mb-4">What You Can Do with MindNest</h2>
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <h3 class="fw-bold mb-4">Explore Your Nest</h3>
+    </div>
+    
     <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h4 class="card-title">📝 Daily Mood Journaling</h4>
-                <p class="card-text mt-3">
-                    Record how you feel every day using moods and personal notes.
-                    Express yourself freely in a private, secure space.
+        <div class="card border-0 shadow-sm h-100 transition-hover">
+            <div class="card-body p-4">
+                <div class="feature-icon bg-success bg-opacity-10 text-success rounded-3 mb-3 p-3 d-inline-block">
+                    <h4 class="mb-0">📓</h4>
+                </div>
+                <h4 class="card-title fw-bold">Daily Journal</h4>
+                <p class="card-text text-muted">
+                    Express yourself freely in a private, secure space. Record moods and personal notes.
                 </p>
             </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h4 class="card-title">📊 Emotional Insights</h4>
-                <p class="card-text mt-3">
-                    Discover emotional patterns over time and understand what impacts
-                    your mental wellbeing the most.
+        <div class="card border-0 shadow-sm h-100 transition-hover">
+            <div class="card-body p-4">
+                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-3 mb-3 p-3 d-inline-block">
+                    <h4 class="mb-0">📈</h4>
+                </div>
+                <h4 class="card-title fw-bold">Deep Insights</h4>
+                <p class="card-text text-muted">
+                    Discover emotional patterns over time and see what truly impacts your wellbeing.
                 </p>
             </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h4 class="card-title">🔒 Safe & Personal</h4>
-                <p class="card-text mt-3">
-                    Your thoughts are private. MindNest is built with secure authentication
-                    to keep your data protected.
+        <div class="card border-0 shadow-sm h-100 transition-hover">
+            <div class="card-body p-4">
+                <div class="feature-icon bg-warning bg-opacity-10 text-warning rounded-3 mb-3 p-3 d-inline-block">
+                    <h4 class="mb-0">🔒</h4>
+                </div>
+                <h4 class="card-title fw-bold">Private & Secure</h4>
+                <p class="card-text text-muted">
+                    Your thoughts stay yours. Built with industry-standard encryption and security.
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<hr>
-
-<!-- Benefits Section -->
-<div class="row mb-5">
-    <h2 class="fw-bold text-center mb-4">How MindNest Helps You</h2>
-
-<div class="row mt-4 text-center">
-  <div class="col-md-3 col-sm-6 mb-4">
-    <div class="p-3 shadow-sm rounded">
-      <h2>🧠</h2>
-      <p class="mb-0 fs-5">Emotional self-awareness</p>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-sm-6 mb-4">
-    <div class="p-3 shadow-sm rounded">
-      <h2>🧘</h2>
-      <p class="mb-0 fs-5">Stress reduction</p>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-sm-6 mb-4">
-    <div class="p-3 shadow-sm rounded">
-      <h2>📊</h2>
-      <p class="mb-0 fs-5">Progress tracking</p>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-sm-6 mb-4">
-    <div class="p-3 shadow-sm rounded">
-      <h2>🌿</h2>
-      <p class="mb-0 fs-5">Mindful routine</p>
-    </div>
-  </div>
-</div>
-
-<!-- Call to Action -->
-<div class="text-center p-5 bg-light rounded shadow-sm">
-    <h3 class="fw-bold">Start Your Emotional Wellness Journey Today 🌱</h3>
-    <a class="btn btn-success btn-md mt-2" id="addEntry">
-        Add Today’s Entry
+<div class="text-center p-5 mb-5 border border-success border-opacity-25 rounded-5">
+    <h3 class="fw-bold mb-3">One small step for your mind today... 🌿</h3>
+    <p class="text-muted mb-4">A few minutes of reflection can lead to a lifetime of clarity.</p>
+    <a href="{{ url_for('journal.entry') }}" class="link-success fw-bold text-decoration-none fs-5">
+        Click here to start today's entry →
     </a>
-    <p class="mt-3">
-        A few minutes a day can make a big difference.
-        Let MindNest be your space to reflect, grow, and heal.
-    </p>
 </div>
+
+<style>
+    /* Subtle hover effect for cards */
+    .transition-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .transition-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    }
+</style>
 
 {% endblock %}

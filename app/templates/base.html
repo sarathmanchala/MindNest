@@ -2,73 +2,151 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MindNest{% endblock %}</title>
 
-    <!-- Bootstrap CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Soft off-white background */
+            color: #2d3436;
+        }
+
+        /* Modernized White Navbar */
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px); /* Glassmorphism effect */
+            border-bottom: 1px solid #eee;
+            padding: 0.8rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            color: #198754 !important; /* Brand Green */
+            letter-spacing: -0.5px;
+        }
+
+        .nav-link {
+            color: #636e72 !important;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #198754 !important;
+        }
+
+        /* Search Bar Enhancement */
+        .search-input {
+            background-color: #f1f3f5;
+            border: none;
+            border-radius: 20px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
+            outline: none;
+        }
+
+        /* Account Dropdown Styling */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 8px 15px;
+        }
+
+        /* Main Container Spacing */
+        .content-wrapper {
+            min-height: calc(100vh - 160px);
+            padding-bottom: 3rem;
+        }
+
+        /* Footer */
+        footer {
+            background: #fff;
+            border-top: 1px solid #eee;
+            padding: 2rem 0;
+            color: #b2bec3;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <!-- Brand -->
-        <a class="navbar-brand fw-bold" href="/">MindNest</a>
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <span class="me-1">🌿</span>MindNest
+        </a>
 
-        <!-- Mobile toggle -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Navbar content -->
         <div class="collapse navbar-collapse" id="navbarContent">
 
-            <!-- Left links -->
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/">Home</a>
+                    <a class="nav-link px-3" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('journal.contact') }}">Contact</a>
+                    <a class="nav-link px-3" href="{{ url_for('journal.history') }}">History</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3" href="{{ url_for('journal.contact') }}">Contact</a>
                 </li>
             </ul>
 
-            <!-- Search bar -->
-            <form class="d-flex me-3" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search journal..." aria-label="Search">
-                <button class="btn btn-outline-light" type="submit">Search</button>
-            </form>
-
-            <!-- Auth dropdown -->
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
+                {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        Account
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                            {{ current_user.username[0] | upper }}
+                        </div>
+                        {{ current_user.username }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                                {% if current_user.is_authenticated %}
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a>
-                                    </li>
-                                {% else %}
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('auth.login') }}">Login</a>
-                                    </li>
-                                {% endif %}
+                        <li><a class="dropdown-item" href="#">My Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
                     </ul>
                 </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="btn btn-outline-success rounded-pill px-4 btn-sm fw-bold" href="{{ url_for('auth.login') }}">Login</a>
+                </li>
+                {% endif %}
             </ul>
 
         </div>
     </div>
 </nav>
 
-<!-- Page Content -->
-<div class="container mt-4">
+<div class="container content-wrapper mt-5">
     {% block content %}
     {% endblock %}
 </div>
 
-<!-- Bootstrap JS -->
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">&copy; 2026 MindNest. Your space for emotional growth.</p>
+    </div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
