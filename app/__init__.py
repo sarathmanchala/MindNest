@@ -14,5 +14,6 @@ def create_app():
     migrate.init_app(app, db)
     app.register_blueprint(journal_bp)
     app.register_blueprint(auth_bp)
-
+    with app.app_context():
+        db.create_all()
     return app
