@@ -11,4 +11,8 @@ class Config:
     USER_API = "https://api.github.com/user"
     EMAIL_API = "https://api.github.com/user/emails"
     SCOPES = ['useremail']
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    "pool_pre_ping": True,
+    }
+
     
