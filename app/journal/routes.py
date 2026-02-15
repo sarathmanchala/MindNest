@@ -8,11 +8,11 @@ from google import genai
 from google.genai import types
 from app.models import JournalEntry, User
 from app.extensions import db
+from groq import Groq
 
-api_key = os.environ.get("GEMINI_API_KEY")
-if not api_key:
-    raise RuntimeError("KEY not loaded")
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+groq_client = Groq(
+    api_key=os.environ.get("GROQ_API_KEY")
+)
 
 journal_bp = Blueprint("journal", __name__, url_prefix="/")
 
@@ -49,25 +49,56 @@ def entry():
 def analyze():
     data = request.get_json()
     user_feelings = data.get('text')
-    system_prompt = """You are an empathetic wellness assistant trained in emotional intelligence and supportive communication. Analyze the user’s journal entry to identify emotions, stressors, thought patterns, and unspoken concerns. Respond in a warm, non-judgmental tone that validates the user’s feelings. Provide gentle insights, emotional reflections, and optional coping or self-care suggestions. Do not diagnose or give medical advice. Your goal is to help the user feel heard, understood, and emotionally supported. 
-    Return ONLY a JSON object with:
-    - 'summary': A 2-sentence empathetic reflection.
-    - 'mood_label' : A one word which best describes the user's overall mood.
-    - 'advice': One actionable adivice what I can do better next time.
-    - 'score': A mood score from 1 (very low) to 10 (very high)."""
 
-    # Placeholder: Tomorrow we connect this to the real Gemini AI
-    # For now, we return a mock response to test the JavaScript
+    system_prompt = """You are an empathetic wellness assistant trained in emotional intelligence and supportive communication. Analyze the user’s journal entry to identify emotions, stressors, thought patterns, and unspoken concerns. Respond in a warm, non-judgmental tone that validates the user’s feelings. Provide gentle insights, emotional reflections, and optional coping or self-care suggestions. Do not diagnose or give medical advice. 
+
+Return ONLY a valid JSON object with:
+{
+  "summary": "2-sentence empathetic reflection",
+  "mood_label": "one word mood",
+  "advice": "one actionable advice",
+  "score": number between 1 and 10
+}
+"""
+
     try:
-        response = client.models.generate_content(model="gemini-2.5-flash-lite", contents=user_feelings, config=types.GenerateContentConfig(system_instruction=system_prompt, response_mime_type="application/json"))
-        print(f"AI Response: {response.text}")
-        ai_response = json.loads(response.text)
-        entry = JournalEntry(content=user_feelings, mood_label=ai_response.get("mood_label"), advice=ai_response.get("advice"), mood_score=ai_response.get("score"),timestamp=ist_now(), user_id=current_user.id, ai_summary=ai_response.get("summary"))
+        completion = groq_client.chat.completions.create(
+            model="openai/gpt-oss-20b",  # Very good model
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_feelings}
+            ],
+            temperature=0.7
+        )
+
+        ai_text = completion.choices[0].message.content
+
+        # Sometimes models add extra text → extract JSON safely
+        import re
+        json_match = re.search(r"\{.*\}", ai_text, re.DOTALL)
+        if not json_match:
+            return jsonify({"error": "Invalid AI response"}), 500
+
+        ai_response = json.loads(json_match.group())
+
+        entry = JournalEntry(
+            content=user_feelings,
+            mood_label=ai_response.get("mood_label"),
+            advice=ai_response.get("advice"),
+            mood_score=ai_response.get("score"),
+            timestamp=ist_now(),
+            user_id=current_user.id,
+            ai_summary=ai_response.get("summary")
+        )
+
         db.session.add(entry)
         db.session.commit()
+
         score = ai_response.get("score")
-        ai_response['mood_class'] = get_mood_class(score)
+        ai_response["mood_class"] = get_mood_class(score)
+
         return jsonify(ai_response)
+
     except Exception as e:
         print(f"Error during AI generation: {e}")
         return jsonify({"error": "Failed to generate response"}), 500
@@ -109,3 +140,4 @@ def delete_entry(entry_id):
     db.session.delete(entry)
     db.session.commit()
     return jsonify({"success": True})
+
