@@ -8,6 +8,10 @@ from google import genai
 from google.genai import types
 from app.models import JournalEntry, User
 from app.extensions import db
+from werkzeug.exceptions import HTTPException, Forbidden
+from functools import wraps
+
+
 
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
@@ -100,8 +104,17 @@ def search_entry(query):
     print(f"Search results for '{query}': {results}")
     return jsonify(results)
 
+def disabled_route(reason="This feature is currently unavailable."):
+    def decorator(func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            raise Forbidden(description=reason)
+        return wrapped
+    return decorator
+
 @journal_bp.route("/delete/<int:entry_id>", methods=["DELETE"])
 @login_required
+# @disabled_route("Deleting entries is currently disabled to prevent accidental loss of data. Please contact support if you need assistance.")
 def delete_entry(entry_id):
     entry = JournalEntry.query.get_or_404(entry_id)
     if entry.user_id != current_user.id:
@@ -109,3 +122,27 @@ def delete_entry(entry_id):
     db.session.delete(entry)
     db.session.commit()
     return jsonify({"success": True})
+
+
+@journal_bp.errorhandler(Exception)
+def handle_all_exceptions(e):
+    from werkzeug.exceptions import HTTPException
+
+    if isinstance(e, HTTPException):
+        code = e.code
+        name = e.name
+        description = e.description
+    else:
+        code = 500
+        name = "Internal Server Error"
+        description = "Something went wrong."
+
+
+    return render_template(
+        "errors/error.html",
+        error_code=code,
+        error_name=name,
+        error_message=description
+    ), code
+
+
