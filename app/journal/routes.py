@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from flask import Blueprint, render_template,jsonify, request
+from flask import Blueprint, flash, redirect, render_template,jsonify, request, url_for
 from flask_login import current_user, login_required
 import os
 import json
@@ -10,7 +10,9 @@ from app.models import JournalEntry, User
 from app.extensions import db
 from werkzeug.exceptions import HTTPException, Forbidden
 from functools import wraps
-
+from werkzeug.utils import secure_filename
+from app.utilities import text_extraction
+from sqlalchemy import func
 
 
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -20,7 +22,57 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 journal_bp = Blueprint("journal", __name__, url_prefix="/")
 
+UPLOAD_FOLDER = "uploads"
 
+ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "doc", "docx"}
+
+def allowed_file(filename):
+    return "." in filename and \
+           filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@journal_bp.route("/upload", methods=["POST"])
+@login_required
+def upload_file():
+    if "file" not in request.files:
+        flash("No file part")
+        return redirect(request.url)
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        flash("No selected file")
+        return redirect(request.url)
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+
+    file_extension = file.filename.rsplit(".", 1)[1].lower()
+    content = text_extraction.extract_text(file, file_extension)
+    print(content)
+    user_feelings = content
+    system_prompt = """You are an empathetic wellness assistant trained in emotional intelligence and supportive communication. Analyze the user’s journal entry to identify emotions, stressors, thought patterns, and unspoken concerns. Respond in a warm, non-judgmental tone that validates the user’s feelings. Provide gentle insights, emotional reflections, and optional coping or self-care suggestions. Do not diagnose or give medical advice. Your goal is to help the user feel heard, understood, and emotionally supported. 
+    Return ONLY a JSON object with:
+    - 'summary': A 2-sentence empathetic reflection.
+    - 'mood_label' : A one word which best describes the user's overall mood.
+    - 'advice': One actionable adivice what I can do better next time.
+    - 'score': A mood score from 1 (very low) to 10 (very high)."""
+
+    # Placeholder: Tomorrow we connect this to the real Gemini AI
+    # For now, we return a mock response to test the JavaScript
+    try:
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=user_feelings, config=types.GenerateContentConfig(system_instruction=system_prompt, response_mime_type="application/json"))
+        print(f"AI Response: {response.text}")
+        ai_response = json.loads(response.text)
+        entry = JournalEntry(content=user_feelings, mood_label=ai_response.get("mood_label"), advice=ai_response.get("advice"), mood_score=ai_response.get("score"),timestamp=ist_now(), user_id=current_user.id, ai_summary=ai_response.get("summary"))
+        db.session.add(entry)
+        db.session.commit()
+        score = ai_response.get("score")
+        ai_response['mood_class'] = get_mood_class(score)
+        return jsonify(ai_response)
+    except Exception as e:
+        print(f"Error during AI generation: {e}")
+        return jsonify({"error": "Failed to generate response"}), 500
+    
 def ist_now():
     return datetime.now(ZoneInfo("Asia/Kolkata"))
 
@@ -32,11 +84,35 @@ def get_mood_class(score):
     else:
         return "bg-danger"
 
+def get_user_streak(entries):
+    unique_dates = sorted({entry.timestamp.date() for entry in entries}, reverse=True)
+
+
+def calculate_streak(entries):
+    if not entries:
+        return 0
+    unique_dates = sorted({entry.timestamp.date() for entry in entries}, reverse=True)
+    streak = 0 
+    today = datetime.today().date()
+    if unique_dates[0] == today:
+        start_date = today
+    else:
+        start_date = today - timedelta(days=1)
+        print(start_date)
+    for i, entry_date in enumerate(unique_dates):
+        expected_date = start_date - timedelta(days=i)
+
+        if entry_date == expected_date:
+            streak += 1 
+        else:
+            break
+    return streak
 
 @journal_bp.route("/")
 @login_required
 def index():
-    return render_template("journal/index.html")
+    streak = calculate_streak(JournalEntry.query.filter_by(user_id=current_user.id).all())
+    return render_template("journal/index.html", streak=streak)
 
 @journal_bp.route("/contact")
 @login_required
@@ -63,7 +139,7 @@ def analyze():
     # Placeholder: Tomorrow we connect this to the real Gemini AI
     # For now, we return a mock response to test the JavaScript
     try:
-        response = client.models.generate_content(model="gemini-2.5-flash-lite", contents=user_feelings, config=types.GenerateContentConfig(system_instruction=system_prompt, response_mime_type="application/json"))
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=user_feelings, config=types.GenerateContentConfig(system_instruction=system_prompt, response_mime_type="application/json"))
         print(f"AI Response: {response.text}")
         ai_response = json.loads(response.text)
         entry = JournalEntry(content=user_feelings, mood_label=ai_response.get("mood_label"), advice=ai_response.get("advice"), mood_score=ai_response.get("score"),timestamp=ist_now(), user_id=current_user.id, ai_summary=ai_response.get("summary"))
@@ -123,26 +199,35 @@ def delete_entry(entry_id):
     db.session.commit()
     return jsonify({"success": True})
 
+@journal_bp.route("/get_moods", methods=["GET"])
+@login_required
+def get_moods():
+    moods = (
+        JournalEntry.query
+        .with_entities(
+            JournalEntry.mood_label,
+            func.count(JournalEntry.mood_label).label("count")
+        )
+        .filter(JournalEntry.user_id == current_user.id)
+        .filter(JournalEntry.mood_label.isnot(None))
+        .group_by(JournalEntry.mood_label)
+        .all()
+    )
 
-@journal_bp.errorhandler(Exception)
-def handle_all_exceptions(e):
-    from werkzeug.exceptions import HTTPException
+    result = [
+        {
+            "mood": mood,
+            "count": count
+        }
+        for mood, count in moods
+    ]
 
-    if isinstance(e, HTTPException):
-        code = e.code
-        name = e.name
-        description = e.description
-    else:
-        code = 500
-        name = "Internal Server Error"
-        description = "Something went wrong."
+    return jsonify(result)
 
+@journal_bp.route("/moodhistory")
+@login_required
+def mood_history_page():
+    return render_template("journal/moodhistory.html")
 
-    return render_template(
-        "errors/error.html",
-        error_code=code,
-        error_name=name,
-        error_message=description
-    ), code
 
 

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Insights | MindNest{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Your Emotional Journey 📊</h2>
+        <p class="text-muted">A breakdown of your recorded moods and their frequency.</p>
+    </div>
+
+    <div class="row g-4" id="moodsRow">
+        <div class="col-12 text-center py-5" id="loader">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-mood {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        border-radius: 16px;
+    }
+    .card-mood:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .progress {
+        height: 10px;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+    }
+    .mood-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 10px;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+    const moodsRow = document.getElementById("moodsRow");
+    const loader = document.getElementById("loader");
+
+    try {
+        const response = await fetch("/get_moods");
+        const moods = await response.json();
+        
+        loader.remove(); // Remove spinner
+
+        if (moods.length === 0) {
+            moodsRow.innerHTML = `
+                <div class="col-md-6 mx-auto text-center py-5">
+                    <div class="card border-0 bg-light p-5">
+                        <h2 class="mb-3">🌱</h2>
+                        <h5>No insights yet</h5>
+                        <p class="text-muted">Start journaling to see your emotional patterns here.</p>
+                        <a href="{{ url_for('journal.entry') }}" class="btn btn-primary mt-3">Add First Entry</a>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        const total = moods.reduce((sum, mood) => sum + mood.count, 0);
+
+        // Generate all cards as a single string to avoid multiple DOM reflows
+        const cardsHTML = moods.map(mood => {
+            const percent = ((mood.count / total) * 100).toFixed(0);
+            const labelParts = mood.mood.split('-'); // Handles "😊-Happy" format
+            const icon = labelParts[0];
+            const name = labelParts[1] || labelParts[0];
+
+            return `
+                <div class="col-md-4 col-lg-3">
+                    <div class="card card-mood shadow-sm h-100">
+                        <div class="card-body text-center p-4">
+                            <span class="mood-icon">${icon}</span>
+                            <h5 class="fw-bold text-dark mb-1">${name}</h5>
+                            <p class="text-muted small mb-3">${mood.count} entries</p>
+                            
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span>Frequency</span>
+                                <span class="fw-bold">${percent}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" 
+                                     role="progressbar" 
+                                     style="width: 0%" 
+                                     data-width="${percent}%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        moodsRow.innerHTML = cardsHTML;
+
+        // Animate progress bars after they are added to DOM
+        setTimeout(() => {
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                bar.style.width = bar.getAttribute('data-width');
+            });
+        }, 100);
+
+    } catch (error) {
+        loader.innerHTML = `<p class="text-danger">Failed to load statistics. Please try again.</p>`;
+    }
+});
+</script>
+{% endblock %}

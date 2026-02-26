@@ -3,69 +3,85 @@
 {% block title %}Your Journey | MindNest{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-5">
 
-    <!-- Page Header -->
-    <div class="row mb-5 align-items-center">
+    <div class="row mb-5 align-items-center justify-content-between">
         <div class="col-md-7">
-            <h1 class="fw-bold mb-1">Your Emotional Journey</h1>
-            <p class="text-muted">A reflection of your growth and daily insights.</p>
+            <h1 class="fw-bold display-6 mb-1">Your Emotional Journey</h1>
+            <p class="text-muted fs-5">A quiet space for your growth and daily insights.</p>
         </div>
-    </div>
-
-    <!-- Search Section -->
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-5">
-            <div class="input-group">
-                <input type="search" id="searchInput" class="form-control" placeholder="Search your reflections">
-                <button class="btn btn-outline-secondary" id="searchReflection">
-                    <i class="bi bi-search"></i>
-                </button>
+        <div class="col-md-auto mt-3 mt-md-0">
+            <div class="d-flex gap-2">
+                <a href="/moodhistory" class="btn btn-outline-primary rounded-pill px-4">
+                    <i class="bi bi-bar-chart-line me-2"></i>Statistics
+                </a>
+                <a href="{{ url_for('journal.entry') }}" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-plus-lg me-2"></i>New Entry
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Journal Entries -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <div class="search-container shadow-sm">
+                <i class="bi bi-search search-icon"></i>
+                <input type="search" id="searchInput" class="form-control border-0 bg-transparent py-3" placeholder="Search your reflections...">
+            </div>
+        </div>
+    </div>
+
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-9">
 
             {% for entry in entries %}
-            <div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden journal-card position-relative" id="entry-{{entry.id}}">
-                <button class="btn btn-sm btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-3 delete-btn" data-id="{{ entry.id }}">
+            <div class="card border-0 shadow-sm mb-5 rounded-4 overflow-hidden journal-card position-relative" id="entry-{{entry.id}}">
+                <button class="btn btn-delete shadow-sm position-absolute top-0 end-0 m-3 delete-btn" data-id="{{ entry.id }}" title="Delete entry">
                     <i class="bi bi-trash text-danger"></i>
                 </button>
-                <div class="card-body p-4">
-                    <small class="text-uppercase fw-bold text-muted">
-                        {{ entry.timestamp.strftime('%B %d, %Y') }}
-                    </small>
 
-                    <h5 class="fw-bold mt-2">Daily Reflection</h5>
-
-                    <p class="mt-3 italic-content">
-                        "{{ entry.content }}"
-                    </p>
-
-                    <div class="mt-3">
-                        <span class="badge {{ entry.mood_class }} rounded-pill px-3 py-2">
-                            {{ entry.mood_label }} ({{ entry.mood_score }}/10)
-                        </span>
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="date-tag px-3 py-1 rounded-pill bg-light text-muted small fw-bold">
+                            {{ entry.timestamp.strftime('%B %d, %Y') }}
+                        </div>
                     </div>
-                    <div class="mt-2">
-                        <small class="text-muted">AI Advice:</small>
-                        <p class="small mb-0">{{ entry.advice }}</p>
+
+                    <div class="reflection-box mb-4">
+                        <h4 class="fw-bold text-dark mb-3">Daily Reflection</h4>
+                        <p class="fs-5 text-secondary italic-content">
+                            “{{ entry.content }}”
+                        </p>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-4 border-top">
+                        <div class="mood-indicator">
+                            <span class="badge {{ entry.mood_class }} rounded-pill px-4 py-2 fs-6">
+                                {{ entry.mood_label }} • {{ entry.mood_score }}/10
+                            </span>
+                        </div>
+                        
+                        <div class="ai-advice-bubble p-3 rounded-4 bg-light w-100 mt-2">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bi bi-stars text-primary me-2"></i>
+                                <small class="text-uppercase fw-bold text-muted" style="letter-spacing: 1px;">AI Insight</small>
+                            </div>
+                            <p class="text-dark small mb-0 lh-base">{{ entry.advice }}</p>
+                        </div>
                     </div>
 
                 </div>
             </div>
             {% endfor %}
 
-            <!-- No Entries Fallback -->
             {% if not entries %}
             <div class="text-center py-5">
-                <h3 class="text-muted">No reflections found. 🌱</h3>
-                <p class="text-secondary">Try a different date or start a new entry.</p>
-                <a href="{{ url_for('journal.entry') }}"
-                   class="btn btn-success mt-2 rounded-pill px-4 shadow-sm">
+                <div class="mb-4">
+                    <i class="bi bi-journal-x display-1 text-light"></i>
+                </div>
+                <h3 class="text-muted fw-bold">The page is blank. 🌱</h3>
+                <p class="text-secondary fs-5 mb-4">Every journey begins with a single word. Start yours now.</p>
+                <a href="{{ url_for('journal.entry') }}" class="btn btn-success btn-lg rounded-pill px-5 shadow">
                     Write Today's Entry
                 </a>
             </div>
@@ -73,26 +89,67 @@
 
         </div>
     </div>
-
 </div>
 
-<!-- Page Styles -->
 <style>
+    /* Modern Search Styling */
+    .search-container {
+        display: flex;
+        align-items: center;
+        background: #fff;
+        border-radius: 50px;
+        padding: 0 20px;
+        border: 1px solid #eee;
+        transition: all 0.3s ease;
+    }
+    .search-container:focus-within {
+        border-color: #0d6efd;
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1) !important;
+    }
+    .search-icon { color: #aaa; font-size: 1.1rem; }
+
+    /* Card & Interaction Styling */
     .journal-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.03) !important;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+    .journal-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
     }
 
-    .journal-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    /* AI Advice Styling */
+    .ai-advice-bubble {
+        border-left: 4px solid #0d6efd;
+        background: #f8faff !important;
+    }
+
+    /* Delete Button Styling */
+    .btn-delete {
+        background: white;
+        border: none;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        opacity: 0;
+        transition: all 0.2s ease;
+    }
+    .journal-card:hover .btn-delete {
+        opacity: 1;
+    }
+    .btn-delete:hover {
+        background: #fff5f5;
+        transform: scale(1.1);
     }
 
     .italic-content {
-        font-style: italic;
-        color: #4b4b4b;
+        line-height: 1.6;
+        color: #333;
+        font-family: 'Georgia', serif;
     }
 </style>
-
-<script src="{{ url_for('static', filename='js/journal.js') }}"></script>
-
 {% endblock %}

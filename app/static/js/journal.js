@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
        ANALYSIS SECTION
     ================================= */
 
-    const analysisForm = document.getElementById("analysisForm");
+    const analysisForm = document.getElementById("analysisForm")
 
     if (analysisForm) {
 
@@ -210,4 +210,33 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Something went wrong while deleting the entry.");
         }
     });
+
+    // Upload section
+    const uploadForm = document.getElementById("uploadForm");
+    if (uploadForm){
+        uploadForm.addEventListener("submit", async function (e){
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            try{
+                const response = await fetch("/upload", {
+                    method : "POST",
+                    body : formData
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "Upload failed.");
+                }
+                document.getElementById("resultPlaceholder").classList.add("d-none");
+                document.getElementById("analysisResult").classList.remove("d-none");
+                document.getElementById("summaryText").innerText = result.summary;
+                document.getElementById("moodBadge").innerText = `${result.mood_label} (${result.score}/10)`;
+                document.getElementById("suggestedFocus").innerText = result.advice || "";
+                document.getElementById("keyEmotion").innerText = result.mood_label;
+            }
+            catch(error){
+                console.error("Upload error:", error);
+                alert(error.message);
+            }
+        });
+    }
 });

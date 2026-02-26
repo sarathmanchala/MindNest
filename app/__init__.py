@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from werkzeug.exceptions import HTTPException
 from flask import Flask, render_template, url_for
 from .config import Config

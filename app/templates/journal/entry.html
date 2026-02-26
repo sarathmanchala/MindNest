@@ -80,7 +80,21 @@
             </div>
                 </div>
             </div>
-
+            <div class="card border-0 shadow-sm rounded-4 mt-4">
+                <div class="card-body p-4">
+                    <form id="uploadForm" action="{{ url_for('journal.upload_file') }}" method="POST" enctype="multipart/form-data">
+                        <label class="form-label fw-bold text-secondary mb-3">
+                            Upload your reflection today
+                        </label>
+                        <div class="input-group">
+                            <input type="file" name="file" class="form-control rounded-start-pill border-0 bg-light">
+                            <button type="submit" class="btn btn-dark rounded-end-pill px-4" id="uploadFile">
+                                <i class="bi bi-upload me-2"></i>Upload
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
