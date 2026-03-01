@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     entries = db.relationship('JournalEntry', back_populates='user', cascade="all, delete-orphan")
+    google_id = db.Column(db.String(200), unique=True, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

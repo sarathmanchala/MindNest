@@ -2,7 +2,7 @@ from flask import Blueprint, redirect, render_template, session, url_for, reques
 from flask_login import login_user, logout_user
 import requests
 from app.extensions import db
-from app.models import User
+from app.models import User, user
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -20,6 +20,86 @@ def github_login():
         f"prompt=consent"
     )
     return redirect(github_auth_url)
+
+@auth_bp.route("/login/google")
+def google_login():
+    cfg = current_app.config
+
+    google_auth_url = (
+        f"{cfg['GOOGLE_AUTHORIZE_URL']}?"
+        f"client_id={cfg['GOOGLE_CLIENT_ID']}&"
+        f"redirect_uri={cfg['GOOGLE_REDIRECT_URI']}&"
+        f"response_type=code&"
+        f"scope=openid%20email%20profile&"
+        f"access_type=offline&"
+        f"prompt=consent"
+    )
+
+    return redirect(google_auth_url)
+
+@auth_bp.route("/callback/google")
+def google_callback():
+    code = request.args.get("code")
+    if not code:
+        return "Missing code from Google", 400
+
+    cfg = current_app.config
+
+    # Exchange code → token
+    token_resp = requests.post(
+        cfg["GOOGLE_TOKEN_URL"],
+        data={
+            "client_id": cfg["GOOGLE_CLIENT_ID"],
+            "client_secret": cfg["GOOGLE_CLIENT_SECRET"],
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": cfg["GOOGLE_REDIRECT_URI"],
+        },
+    ).json()
+
+    access_token = token_resp.get("access_token")
+    if not access_token:
+        return f"Token error: {token_resp}", 400
+
+    # Fetch Google user info
+    user_data = requests.get(
+        cfg["GOOGLE_USERINFO_URL"],
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+
+    if "sub" not in user_data:
+        return f"Google user error: {user_data}", 400
+
+    google_id = user_data["sub"]
+    email = user_data.get("email")
+    username = user_data.get("name")
+
+    # First check by google_id
+    user = User.query.filter_by(google_id=google_id).first()
+
+    if not user:
+        # Check if email already exists
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Link Google account to existing user
+            user.google_id = google_id
+            db.session.commit()
+        else:
+            # Create completely new user
+            user = User(
+                google_id=google_id,
+                username=username,
+                email=email,
+            )
+            user.set_password(username)
+            db.session.add(user)
+            db.session.commit()
+    session["access_token"] = access_token
+    if user:
+        user = User.query.filter_by(email=email).first()
+        login_user(user)
+    return redirect(url_for("journal.index"))
 
 @auth_bp.route("/logout")
 def logout():
